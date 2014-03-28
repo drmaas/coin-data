@@ -39,7 +39,11 @@ def run_collector(period):
     exchangeDao.addExchange('campbx')
     exchangeDao.addExchange('cryptsy')    
     
+    session.commit()
+    
     while True:
+
+        session = getSession(engine)
 
         btceExchangeId = exchangeDao.getExchangeByName('btce').id
         

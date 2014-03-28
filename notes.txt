@@ -1,1 +1,0 @@
-Working with python in heroku: https://devcenter.heroku.com/articles/getting-started-with-python

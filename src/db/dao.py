@@ -24,7 +24,7 @@ class ExchangeDao(object):
         
     def getExchangeByName(self, name):
         res = self.session.query(Exchange).filter(Exchange.name == name)
-        if res != None:
+        if res != None and res.count() > 0:
             ex = res.one()
         else:
             ex = None

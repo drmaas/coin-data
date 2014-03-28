@@ -1,0 +1,4 @@
+# run psql after sudo su - postgres
+create user coin;
+alter user coin with password 'coin';
+create database coindb owner coin;

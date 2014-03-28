@@ -8,7 +8,7 @@ from api.btce import Btce
 
 from db.coin import Coin
 from db.dao import ExchangeDao
-from db.util import psql_connect
+from db.util import connect
 
 from threading import Thread
 
@@ -23,20 +23,24 @@ def run():
 
 def run_collector(period):
     
-    engine = psql_connect()
+    engine = connect()
         
     # get btce ticker
     btce = Btce() 
     
     pairs = [ 'btc_usd', 'ltc_usd', 'ltc_btc', 'nmc_usd', 'nmc_btc', 'ppc_usd', 'ppc_btc', 'xpm_btc' ]
     
+    # get db connection
+    session = getSession(engine)
+    
+    # get exchange id
+    exchangeDao = ExchangeDao(session)
+    exchangeDao.addExchange('btce')
+    exchangeDao.addExchange('campbx')
+    exchangeDao.addExchange('cryptsy')    
+    
     while True:
-        
-        # get db connection
-        session = getSession(engine)
-        
-        # get exchange id
-        exchangeDao = ExchangeDao(session)
+
         btceExchangeId = exchangeDao.getExchangeByName('btce').id
         
         # get btce pairs and save

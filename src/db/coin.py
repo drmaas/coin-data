@@ -6,9 +6,8 @@ Created on Mar 9, 2014
 
 from sqlalchemy import Sequence, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
-from db.util import psql_connect
+from db.util import connect
 
 # Base object
 Base = declarative_base()
@@ -45,10 +44,5 @@ class Coin(Base):
                                 self.timestamp, self.exchangeId)
         
 # create db if it doesn't exist
-engine = psql_connect()
+engine = connect()
 Base.metadata.create_all(engine)
-
-# misc ddl update statements
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
-session.commit()

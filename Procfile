@@ -1,1 +1,1 @@
-web: python src/collector.py
+worker: python src/collector.py

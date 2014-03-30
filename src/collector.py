@@ -9,12 +9,11 @@ from api.btce import Btce
 from db.coin import Coin
 from db.dao import ExchangeDao
 from db.util import connect
+from db.util import getSession
 
 from threading import Thread
 
 import time
-
-from sqlalchemy.orm import sessionmaker 
 
 def run():
     period = 300
@@ -65,10 +64,6 @@ def run_collector(period):
         session.commit()
         
         time.sleep(period)
-
-def getSession(engine):
-    DBSession = sessionmaker(bind=engine)
-    return DBSession()
 
 if __name__ == '__main__':
     run()

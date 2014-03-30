@@ -1,5 +1,7 @@
 from sqlalchemy import create_engine
 
+from sqlalchemy.orm import sessionmaker
+
 import os
 
 '''
@@ -14,5 +16,7 @@ def connect():
     #localtest: postgresql://coin:coin@localhost/coindb
     return create_engine(dburl, echo=True)
 
-
+def getSession(engine):
+    DBSession = sessionmaker(bind=engine)
+    return DBSession()
     

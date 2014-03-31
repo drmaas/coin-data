@@ -15,17 +15,17 @@ class CoinDao(object):
         self.session = session
         
     # Get values of pair for last x days. days=-1 gets all data, beware!
-    def getValues(self, exchangeId, pair, ageInDays=0):
-        if ageInDays < 1:
+    def getValues(self, exchangeId, pair, ageInHours=0):
+        if ageInHours < 1:
             timestamp = 0
         else:
-            now = int(round(time.time() * 1000))
-            timestamp = now - ageInDays*24*60*60*1000
+            now = int(round(time.time()))
+            timestamp = now - ageInHours*60*60
             
         values = self.session.query(Coin).filter(Coin.exchangeId == exchangeId).\
                                           filter(Coin.pair == pair).\
                                           filter(Coin.timestamp > timestamp)
-        return values
+        return values.all()
     
 class ExchangeDao(object):
     

@@ -25,8 +25,8 @@ def calculateEMA(coins, period):
     
 def aggregate(coins, period):
     
-    # number of 15 minute segments/block
-    num = period*4
+    # number of 10 minute segments/block
+    num = period*6
     
     start = 0
     end = num

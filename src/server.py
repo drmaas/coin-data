@@ -2,7 +2,6 @@ from flask import Flask
 from flask import request
 from flask import jsonify
 
-from db.util import connect
 from db.util import getSession
 
 from db.dao import CoinDao 
@@ -22,21 +21,22 @@ app = Flask(__name__)
 def getEMA(exchangeId, pair):
     # get period in hours, and number of periods to average over
     period = int(request.args.get('period', '2'))
+    if period < 1 or period > 24:
+        return jsonify(error="Period must be between 1 and 24 hours")
     numperiods = int(request.args.get('numperiods', '7'))
+    if numperiods < 1 or numperiods > 30:
+        return jsonify(error="Averages can only be calculated on ranges from 1-30 time blocks")
     ageInHours = period*numperiods
     
     # get list of values
-    coinDao = getCoinDao()
+    session = getSession()
+    coinDao = CoinDao(session)
     values = coinDao.getValues(exchangeId, pair, ageInHours)
     
     # calculate the ema of the values returned
     ema = calculateEMA(values, period)
     
+    session.close()
+    
     # return json
     return jsonify(exchangeId=exchangeId, pair=pair, ema=ema)
-
-def getCoinDao():
-    engine = connect()
-    session = getSession(engine)
-    return CoinDao(session)
-        

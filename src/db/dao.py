@@ -14,7 +14,7 @@ class CoinDao(object):
     def __init__(self, session):
         self.session = session
         
-    # Get values of pair for last x days. days=-1 gets all data, beware!
+    # Get values of pair for last x hours. days=-1 gets all data, beware!
     def getValues(self, exchangeId, pair, ageInHours=0):
         if ageInHours < 1:
             timestamp = 0
@@ -24,8 +24,23 @@ class CoinDao(object):
             
         values = self.session.query(Coin).filter(Coin.exchangeId == exchangeId).\
                                           filter(Coin.pair == pair).\
-                                          filter(Coin.timestamp > timestamp)
-        return values.all()
+                                          filter(Coin.timestamp > timestamp).all()
+        return values
+    
+    # delete values older than maxAgeHours and return the deleted items
+    def deleteOldValues(self, exchangeId, maxAgeHours):
+        now = int(round(time.time()))
+        timestamp = now - maxAgeHours*60*60
+        
+        values = self.session.query(Coin).filter(Coin.exchangeId == exchangeId).\
+                                  filter(Coin.timestamp < timestamp).all()
+        for row in values:
+            self.session.delete(row)
+            
+        length = len(values)
+        print length," rows deleted: ",values
+        
+        return values
     
 class ExchangeDao(object):
     

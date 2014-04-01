@@ -8,7 +8,7 @@ from api.btce import Btce
 
 from db.coin import Coin
 from db.dao import ExchangeDao
-from db.util import connect
+from db.dao import CoinDao
 from db.util import getSession
 
 from threading import Thread
@@ -16,13 +16,18 @@ from threading import Thread
 import time
 
 def run():
-    period = 300
-    t1 = Thread(target=run_collector, args=(period,))
-    t1.start()   
+    # Run once every 10 minutes
+    period1 = 600
+    t1 = Thread(target=run_collector, args=(period1,))
+    # Run once per hour
+    period2 = 3600 
+    maxAgeHours = 24*7
+    t2 = Thread(target=run_cleanup, args=(period2,maxAgeHours))
+    
+    t1.start()
+    t2.start()
 
 def run_collector(period):
-    
-    engine = connect()
         
     # get btce ticker
     btce = Btce() 
@@ -30,7 +35,7 @@ def run_collector(period):
     pairs = [ 'btc_usd', 'ltc_usd', 'ltc_btc', 'nmc_usd', 'nmc_btc', 'ppc_usd', 'ppc_btc', 'xpm_btc' ]
     
     # get db connection
-    session = getSession(engine)
+    session = getSession()
     
     # get exchange id
     exchangeDao = ExchangeDao(session)
@@ -40,13 +45,11 @@ def run_collector(period):
     
     session.commit()
     
-    while True:
-
-        session = getSession(engine)
-
-        btceExchangeId = exchangeDao.getExchangeByName('btce').id
-        
+    btceExchangeId = exchangeDao.getExchangeByName('btce').id
+    
+    while True:    
         # get btce pairs and save
+        coins = []
         for pair in pairs:
             ticker = btce.getTicker(pair)
             coin = Coin(pair=pair,
@@ -58,12 +61,28 @@ def run_collector(period):
                         last=float(ticker['last']),
                         timestamp=int(ticker['updated']),
                         exchangeId=btceExchangeId)
-            session.add(coin)
+            coins.append(coin)
     
         # commit and close
+        session.add_all(coins)
         session.commit()
         
         time.sleep(period)
+    
+# Expunge entries older than maxAgeDays    
+def run_cleanup(period, maxAgeHours):
+
+    # get db connection
+    session = getSession()
+    coinDao = CoinDao(session)
+    
+    exchangeDao = ExchangeDao(session)
+    btceExchangeId = exchangeDao.getExchangeByName('btce').id
+    
+    coinDao.deleteOldValues(btceExchangeId, maxAgeHours)
+    session.commit()
+    
+    time.sleep(period)
 
 if __name__ == '__main__':
     run()

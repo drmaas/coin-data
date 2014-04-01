@@ -2,6 +2,8 @@ from flask import Flask
 from flask import request
 from flask import jsonify
 
+from security.auth import basicauth
+
 from db.util import getSession
 
 from db.dao import CoinDao 
@@ -18,6 +20,7 @@ app = Flask(__name__)
 
 # Note: 7 and 30 seem good numperiods defaults
 @app.route('/ema/<int:exchangeId>/<pair>', methods=['GET'])
+@basicauth
 def getEMA(exchangeId, pair):
     # get period in hours, and number of periods to average over
     period = int(request.args.get('period', '2'))

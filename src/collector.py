@@ -30,9 +30,10 @@ def run():
     t2 = Thread(target=run_cleanup, args=(period2,maxAgeHours))
     # Run once every 5 minutes
     period3 = 300
-    t3 = Thread(target=run_trader,args=(period3))
+    t3 = Thread(target=run_trader, args=(period3,1,1,8,24))
     t1.start()
     t2.start()
+    t3.start()
 
 # collect data
 def run_collector(period):
@@ -41,6 +42,7 @@ def run_collector(period):
     btce = Btce() 
     
     # get exchange id
+    session = getSession() 
     exchangeDao = ExchangeDao(session)
     exchangeDao.addExchange('btce')
     exchangeDao.addExchange('campbx')
@@ -76,6 +78,7 @@ def run_collector(period):
 def run_cleanup(period, maxAgeHours):
 
     # get db connection
+    session = getSession() 
     coinDao = CoinDao(session)
     
     exchangeDao = ExchangeDao(session)
@@ -87,26 +90,29 @@ def run_cleanup(period, maxAgeHours):
     time.sleep(period)
     
 # Trade them coins
-def run_trader(period):
+def run_trader(period, shortperiod, longperiod, shortnumperiods, longnumperiods):
+    session = getSession() 
     coinData = CoinData()
     trader = Trader()
     prevstate = TradeState.LONGEQUAL
     exchangeDao = ExchangeDao(session)
     btceExchangeId = exchangeDao.getExchangeByName('btce').id
     for pair in pairs:
-        shortema = coinData.getEma(btceExchangeId, pair, 1, 8)
-        longema = coinData.getEma(btceExchangeId, pair, 1, 24)
+        shortema = coinData.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
+        longema = coinData.getEma(btceExchangeId, pair, longperiod, longnumperiods)
+        print "Short ema:"+str(shortema)+". Long ema:"+str(longema)
+        print "Previous state:"+str(prevstate)
         if shortema < longema:
             if prevstate == TradeState.LONGBELOW or prevstate == TradeState.LONGEQUAL:
                 print "SELL "+pair+" IF POSSIBLE"
-                
+                trader.sell(btceExchangeId, pair)
         else:
             if prevstate == TradeState.LONGABOVE or prevstate == TradeState.LONGEQUAL:
                 print "BUY "+pair+" IF POSSIBLE"
+                trader.buy(btceExchangeId, pair)
     
     time.sleep(period)
 
 if __name__ == '__main__':
-    pairs = [ 'btc_usd', 'ltc_usd', 'ltc_btc', 'nmc_usd', 'nmc_btc', 'ppc_usd', 'ppc_btc', 'xpm_btc' ]
-    session = getSession()    
+    pairs = [ 'btc_usd', 'ltc_usd', 'ltc_btc', 'nmc_usd', 'nmc_btc', 'ppc_usd', 'ppc_btc', 'xpm_btc' ]   
     run()

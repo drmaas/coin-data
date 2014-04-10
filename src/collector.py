@@ -11,6 +11,11 @@ from db.dao import ExchangeDao
 from db.dao import CoinDao
 from db.util import getSession
 
+from trade.trader import Trader
+from trade.trader import TradeState
+
+from api.coindata import CoinData
+
 from threading import Thread
 
 import time
@@ -23,19 +28,17 @@ def run():
     period2 = 3600 
     maxAgeHours = 24*7
     t2 = Thread(target=run_cleanup, args=(period2,maxAgeHours))
-    
+    # Run once every 5 minutes
+    period3 = 300
+    t3 = Thread(target=run_trader,args=(period3))
     t1.start()
     t2.start()
 
+# collect data
 def run_collector(period):
         
     # get btce ticker
     btce = Btce() 
-    
-    pairs = [ 'btc_usd', 'ltc_usd', 'ltc_btc', 'nmc_usd', 'nmc_btc', 'ppc_usd', 'ppc_btc', 'xpm_btc' ]
-    
-    # get db connection
-    session = getSession()
     
     # get exchange id
     exchangeDao = ExchangeDao(session)
@@ -73,7 +76,6 @@ def run_collector(period):
 def run_cleanup(period, maxAgeHours):
 
     # get db connection
-    session = getSession()
     coinDao = CoinDao(session)
     
     exchangeDao = ExchangeDao(session)
@@ -83,6 +85,28 @@ def run_cleanup(period, maxAgeHours):
     session.commit()
     
     time.sleep(period)
+    
+# Trade them coins
+def run_trader(period):
+    coinData = CoinData()
+    trader = Trader()
+    prevstate = TradeState.LONGEQUAL
+    exchangeDao = ExchangeDao(session)
+    btceExchangeId = exchangeDao.getExchangeByName('btce').id
+    for pair in pairs:
+        shortema = coinData.getEma(btceExchangeId, pair, 1, 8)
+        longema = coinData.getEma(btceExchangeId, pair, 1, 24)
+        if shortema < longema:
+            if prevstate == TradeState.LONGBELOW or prevstate == TradeState.LONGEQUAL:
+                print "SELL "+pair+" IF POSSIBLE"
+                
+        else:
+            if prevstate == TradeState.LONGABOVE or prevstate == TradeState.LONGEQUAL:
+                print "BUY "+pair+" IF POSSIBLE"
+    
+    time.sleep(period)
 
 if __name__ == '__main__':
+    pairs = [ 'btc_usd', 'ltc_usd', 'ltc_btc', 'nmc_usd', 'nmc_btc', 'ppc_usd', 'ppc_btc', 'xpm_btc' ]
+    session = getSession()    
     run()

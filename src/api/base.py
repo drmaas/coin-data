@@ -8,13 +8,15 @@ import requests
 
 class Base(object):
 
-    def __init__(self, baseurl):
+    def __init__(self, baseurl, user='', passwd=''):
         self.baseurl = baseurl
+        self.user = user
+        self.passwd = passwd 
         
-    def get(self, path):
+    def get(self, path, params = {}):
         url = self.baseurl + path
-        print url
-        r = requests.get(url)
+        r = requests.get(url, params=params, auth=(self.user,self.passwd))
+        print r.url
         if r is not None:
             result = r.json()
         else:
@@ -22,6 +24,3 @@ class Base(object):
             
         print result
         return result
-        
-    
-    

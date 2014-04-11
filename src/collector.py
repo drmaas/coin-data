@@ -16,7 +16,7 @@ from trade.trader import TradeState
 
 #from api.coindata import CoinData
 
-from analytics.ema import getEma
+from analytics.ema import Ema
 
 from threading import Thread
 
@@ -99,11 +99,12 @@ def run_trader(period, shortperiod, longperiod, shortnumperiods, longnumperiods)
     prevstate = TradeState.NA
     exchangeDao = ExchangeDao(session)
     btceExchangeId = exchangeDao.getExchangeByName('btce').id
+    ema = Ema(session)
     for pair in pairs:
         #shortema = coinData.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
         #longema = coinData.getEma(btceExchangeId, pair, longperiod, longnumperiods)
-        shortema = getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
-        longema = getEma(btceExchangeId, pair, longperiod, longnumperiods)
+        shortema = ema.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
+        longema = ema.getEma(btceExchangeId, pair, longperiod, longnumperiods)
         print "Short ema:"+str(shortema)+". Long ema:"+str(longema)
         print "Previous state:"+str(prevstate)
         if shortema < longema:

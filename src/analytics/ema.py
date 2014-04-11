@@ -3,83 +3,89 @@ Created on Mar 30, 2014
 
 @author: drmaas
 '''
-from db.util import getSession
 
 from db.dao import CoinDao 
 
-# Return ema as a value based on period and numperiods
-def getEma(exchangeId, pair, period=2, numperiods=7):
-    ageInHours = period*numperiods
-    
-    # get list of values
-    session = getSession()
-    coinDao = CoinDao(session)
-    values = coinDao.getValues(exchangeId, pair, ageInHours)
-    
-    # calculate the ema of the values returned
-    ema = calculateEMA(values, period)
-    
-    session.close()
-    
-# Calculate exponential moving average
-# coins is list of values
-# period is amount of time in hours at which to sample
-# blocks is the number of blocks to average over
-# baseline is ema for 7 2-hour periods and 30 2-hour periods
-def calculateEMA(coins, period):
-    
-    # pre-process values into list of 'period' hour averages
-    values = aggregate(coins, period)
+class Ema(object):
 
-    # Step 1: Simple moving average used in first ema calculation as the previous period's value
-    sma = calculateSMA(coins)
-    
-    # Step 2: Multiplier
-    multiplier = calculateMultiplier(len(values))
-    
-    # Step 3: ema
-    return calculateEMAInternal(values, sma, multiplier)
-    
-def aggregate(coins, period):
-    
-    # number of 10 minute segments/block
-    num = period*6
-    
-    start = 0
-    end = num
+    def __init__(self, session):
+        self.session = session
 
-    aggregates = []
-    while True:
-        aggregates.append(calculateSMA(coins[start:end]))
-        if end >= len(coins):
-            break
+    # Return ema as a value based on period and numperiods
+    def getEma(self, exchangeId, pair, period=2, numperiods=7):
+        ageInHours = period*numperiods
+        
+        # get list of value
+        coinDao = CoinDao(self.session)
+        values = coinDao.getValues(exchangeId, pair, ageInHours)
+        
+        # calculate the ema of the values returned
+        return self.calculateEma(values, period)
+        
+    # Calculate exponential moving average
+    # coins is list of values
+    # period is amount of time in hours at which to sample
+    # blocks is the number of blocks to average over
+    # baseline is ema for 7 2-hour periods and 30 2-hour periods
+    def calculateEma(self, coins, period):
+        
+        # pre-process values into list of 'period' hour averages
+        values = self.aggregate(coins, period)
+    
+        # Step 1: Simple moving average used in first ema calculation as the previous period's value
+        sma = self.calculateSMA(coins)
+    
+        # Step 2: Multiplier
+        multiplier = self.calculateMultiplier(len(values))
+    
+        # Step 3: ema
+        return self.calculateEMAInternal(values, sma, multiplier)
+        
+    def aggregate(self, coins, period):
+        
+        # number of 10 minute segments/block
+        num = period*6
+        
+        start = 0
+        end = num
+    
+        aggregates = []
+        if len(coins) > 0:
+            while True:
+                aggregates.append(self.calculateSMA(coins[start:end]))
+                if end >= len(coins):
+                    break
+                else:
+                    start = end
+                    end = start + num
+        
+        return aggregates
+        
+    # simple moving average of all values
+    def calculateSMA(self, coins):
+        size = len(coins)
+        total = 0.0
+        if (size > 0):
+            for i in xrange(0, size):
+                coin = coins[i]
+                total = total + coin.last
         else:
-            start = end
-            end = start + num
+            size = 1
+        return float(total/float(size))
     
-    return aggregates
+    # formula: (2 / (Time periods + 1) )
+    def calculateMultiplier(self, periods):
+        return float(2.0/(float(periods)+1.0))
     
-# simple moving average of all values
-def calculateSMA(coins):
-    size = len(coins)
-    total = 0.0
-    for i in xrange(0, size):
-        coin = coins[i]
-        total = total + coin.last
-    return float(total/float(size))
-
-# formula: (2 / (Time periods + 1) )
-def calculateMultiplier(periods):
-    return float(2.0/(float(periods)+1.0))
-
-# formula is {Close - EMA(previous day)} x multiplier + EMA(previous day)
-def calculateEMAInternal(values, sma, multiplier):
-    last = len(values) - 1
-    if last == 0:
-        prevema = sma
-    else:
-        prevema = calculateEMAInternal(values[0:last], sma, multiplier)
-    
-    close = values[last]
-    return ((close - prevema) * multiplier) + prevema
-    
+    # formula is {Close - EMA(previous day)} x multiplier + EMA(previous day)
+    def calculateEMAInternal(self, values, sma, multiplier):
+        last = len(values) - 1
+        if last <= 0:
+            prevema = sma
+        else:
+            prevema = self.calculateEMAInternal(values[0:last], sma, multiplier)
+        if last >= 0:
+            close = values[last]
+        else:
+            close = 0.0
+        return ((close - prevema) * multiplier) + prevema

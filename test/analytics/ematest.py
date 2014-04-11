@@ -6,7 +6,8 @@ Created on Mar 30, 2014
 import unittest
 import math
 
-from analytics.ema import calculateEMA
+from analytics.ema import getEma
+from analytics.ema import calculateEma
 
 from db.coin import Coin
 
@@ -16,9 +17,13 @@ class emaTest(unittest.TestCase):
     def setUp(self):
         pass
 
-
     def tearDown(self):
         pass
+    
+    def testGetEma(self):
+        ema = getEma(1, 'btc_usd', 1, 8)
+        self.assertIsNotNone(ema)
+        print ema
 
     def testCalculateEMA(self):
         coins = []
@@ -26,7 +31,7 @@ class emaTest(unittest.TestCase):
         for i in xrange(0,96):
             coins.append(self.createCoin(i))
         
-        ema = calculateEMA(coins, 2)
+        ema = calculateEma(coins, 2)
         
         self.assertEquals(math.floor(ema), 60, 'Invalid ema=%6.10f' % ema)
 

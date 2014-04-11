@@ -3,7 +3,24 @@ Created on Mar 30, 2014
 
 @author: drmaas
 '''
+from db.util import getSession
 
+from db.dao import CoinDao 
+
+# Return ema as a value based on period and numperiods
+def getEma(exchangeId, pair, period=2, numperiods=7):
+    ageInHours = period*numperiods
+    
+    # get list of values
+    session = getSession()
+    coinDao = CoinDao(session)
+    values = coinDao.getValues(exchangeId, pair, ageInHours)
+    
+    # calculate the ema of the values returned
+    ema = calculateEMA(values, period)
+    
+    session.close()
+    
 # Calculate exponential moving average
 # coins is list of values
 # period is amount of time in hours at which to sample

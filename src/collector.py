@@ -14,7 +14,9 @@ from db.util import getSession
 from trade.trader import Trader
 from trade.trader import TradeState
 
-from api.coindata import CoinData
+#from api.coindata import CoinData
+
+from analytics.ema import getEma
 
 from threading import Thread
 
@@ -92,24 +94,32 @@ def run_cleanup(period, maxAgeHours):
 # Trade them coins
 def run_trader(period, shortperiod, longperiod, shortnumperiods, longnumperiods):
     session = getSession() 
-    coinData = CoinData()
+    #coinData = CoinData()
     trader = Trader()
-    prevstate = TradeState.LONGEQUAL
+    prevstate = TradeState.NA
     exchangeDao = ExchangeDao(session)
     btceExchangeId = exchangeDao.getExchangeByName('btce').id
     for pair in pairs:
-        shortema = coinData.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
-        longema = coinData.getEma(btceExchangeId, pair, longperiod, longnumperiods)
+        #shortema = coinData.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
+        #longema = coinData.getEma(btceExchangeId, pair, longperiod, longnumperiods)
+        shortema = getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
+        longema = getEma(btceExchangeId, pair, longperiod, longnumperiods)
         print "Short ema:"+str(shortema)+". Long ema:"+str(longema)
         print "Previous state:"+str(prevstate)
         if shortema < longema:
             if prevstate == TradeState.LONGBELOW or prevstate == TradeState.LONGEQUAL:
                 print "SELL "+pair+" IF POSSIBLE"
                 trader.sell(btceExchangeId, pair)
+            else:
+                print "HOLD "+pair
+            prevstate = TradeState.LONGABOVE
         else:
             if prevstate == TradeState.LONGABOVE or prevstate == TradeState.LONGEQUAL:
                 print "BUY "+pair+" IF POSSIBLE"
                 trader.buy(btceExchangeId, pair)
+            else:
+                print "HOLD fiat, wait to buy "+pair
+            prevstate = TradeState.LONGBELOW
     
     time.sleep(period)
 

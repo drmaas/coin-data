@@ -18,6 +18,6 @@ class Trader(object):
         pass
 
 class TradeState(Enum):
-    LONGABOVE,LONGEQUAL,LONGBELOW = range(3)
-        
+    LONGABOVE,LONGEQUAL,LONGBELOW,NA = range(4)
+    
     

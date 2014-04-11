@@ -4,11 +4,7 @@ from flask import jsonify
 
 from security.auth import basicauth
 
-from db.util import getSession
-
-from db.dao import CoinDao 
-
-from analytics.ema import calculateEMA
+from analytics.ema import getEma
 
 '''
 Created on Mar 30, 2014
@@ -29,17 +25,8 @@ def getEMA(exchangeId, pair):
     numperiods = int(request.args.get('numperiods', '7'))
     if numperiods < 1 or numperiods > 30:
         return jsonify(error="Averages can only be calculated on ranges from 1-30 time blocks")
-    ageInHours = period*numperiods
-    
-    # get list of values
-    session = getSession()
-    coinDao = CoinDao(session)
-    values = coinDao.getValues(exchangeId, pair, ageInHours)
-    
-    # calculate the ema of the values returned
-    ema = calculateEMA(values, period)
-    
-    session.close()
+
+    ema = getEma(exchangeId, pair, period, numperiods)
     
     # return json
     return jsonify(exchangeId=exchangeId, pair=pair, ema=ema)

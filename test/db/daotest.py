@@ -10,7 +10,6 @@ from db.coin import Exchange
 from db.dao import CoinDao
 from db.dao import ExchangeDao
 
-from db.util import connect
 from db.util import getSession
 
 import os
@@ -18,7 +17,7 @@ import os
 class DaoTest(unittest.TestCase):
 
     def setUp(self):
-        self.session = getSession(connect())
+        self.session = getSession()
         self.dao = CoinDao(self.session)
 
     def tearDown(self):

@@ -7,8 +7,11 @@ Created on Mar 9, 2014
 from api.btce import Btce
 
 from db.coin import Coin
+from db.coin import Pair
+
 from db.dao import ExchangeDao
 from db.dao import CoinDao
+from db.dao import PairDao
 from db.util import getSession
 
 from trade.trader import Trader
@@ -46,18 +49,18 @@ def run_collector(period):
     # get exchange id
     session = getSession() 
     exchangeDao = ExchangeDao(session)
-    exchangeDao.addExchange('btce')
-    exchangeDao.addExchange('campbx')
-    exchangeDao.addExchange('cryptsy')    
-    
-    session.commit()
-    
     btceExchangeId = exchangeDao.getExchangeByName('btce').id
+    
+    # get available pairs
+    pairDao = PairDao(session)
+    pairs = pairDao.getPairsByExchangeId(btceExchangeId)
     
     while True:    
         # get btce pairs and save
         coins = []
-        for pair in pairs:
+        for pairObj in pairs:
+            pair = pairObj.pair
+            pairId = pairObj.id
             ticker = btce.getTicker(pair)
             coin = Coin(pair=pair,
                         high=float(ticker['high']),
@@ -67,7 +70,8 @@ def run_collector(period):
                         ask=float(ticker['sell']),
                         last=float(ticker['last']),
                         timestamp=int(ticker['updated']),
-                        exchangeId=btceExchangeId)
+                        exchangeId=btceExchangeId,
+                        pairId=pairId)
             coins.append(coin)
     
         # commit and close
@@ -94,13 +98,18 @@ def run_cleanup(period, maxAgeHours):
 # Trade them coins
 def run_trader(period, shortperiod, longperiod, shortnumperiods, longnumperiods):
     session = getSession() 
-    #coinData = CoinData()
     trader = Trader()
     prevstate = TradeState.NA
     exchangeDao = ExchangeDao(session)
     btceExchangeId = exchangeDao.getExchangeByName('btce').id
+    
+    # get available pairs
+    pairDao = PairDao(session)
+    pairs = pairDao.getPairsByExchangeId(btceExchangeId)
+        
     ema = Ema(session)
-    for pair in pairs:
+    for pairObj in pairs:
+        pair = pairObj.pair
         #shortema = coinData.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
         #longema = coinData.getEma(btceExchangeId, pair, longperiod, longnumperiods)
         shortema = ema.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
@@ -124,6 +133,5 @@ def run_trader(period, shortperiod, longperiod, shortnumperiods, longnumperiods)
     
     time.sleep(period)
 
-if __name__ == '__main__':
-    pairs = [ 'btc_usd', 'ltc_usd', 'ltc_btc', 'nmc_usd', 'nmc_btc', 'ppc_usd', 'ppc_btc', 'xpm_btc' ]   
+if __name__ == '__main__': 
     run()

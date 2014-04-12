@@ -22,6 +22,17 @@ class Exchange(Base):
     
     def __repr__(self):
         return "<Exchange(id='%i', name='%s')>" % ( self.id. self.name)
+    
+class Pair(Base):
+    
+    __tablename__ = 'pair'
+    
+    id = Column(Integer, Sequence('pair_id_seq'), primary_key=True)
+    exchangeId = Column(Integer)
+    pair = Column(String(50))
+    
+    def __repr__(self):
+        return "<Pair(id='%i', exchangeId='%i', pair='%s')>" % ( self.id, self.exchangeId, self.pair)    
 
 class Coin(Base):
     
@@ -34,14 +45,15 @@ class Coin(Base):
     average = Column(Float(50))
     bid = Column(Float(50))
     ask = Column(Float(50))
-    last = Column(Float(50))    
+    last = Column(Float(50))
     timestamp = Column(Integer)
     exchangeId = Column(Integer)
+    pairId = Column(Integer)
 
     def __repr__(self):
-        return "<Coin(id='%i', pair='%s', high='%f', low='%f', average='%f', bid='%f', ask='%f', last='%f', timestamp='%i', exchangeId='%i')>" % (
+        return "<Coin(id='%i', pair='%s', high='%f', low='%f', average='%f', bid='%f', ask='%f', last='%f', timestamp='%i', exchangeId='%i', pairId='%i')>" % (
                                 self.id, self.pair, self.high, self.low, self.average, self.bid, self.ask, self.last, 
-                                self.timestamp, self.exchangeId)
+                                self.timestamp, self.exchangeId, self.pairId)
         
 # create db if it doesn't exist
 engine = connect()

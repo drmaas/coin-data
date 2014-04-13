@@ -42,20 +42,20 @@ def run():
 
 # collect data
 def run_collector(period):
-        
+      
     # get btce ticker
     btce = Btce() 
     
-    # get exchange id
-    session = getSession() 
-    exchangeDao = ExchangeDao(session)
-    btceExchangeId = exchangeDao.getExchangeByName('btce').id
+    while True:       
+        # get exchange id
+        session = getSession() 
+        exchangeDao = ExchangeDao(session)
+        btceExchangeId = exchangeDao.getExchangeByName('btce').id
+        
+        # get available pairs
+        pairDao = PairDao(session)
+        pairs = pairDao.getPairsByExchangeId(btceExchangeId)
     
-    # get available pairs
-    pairDao = PairDao(session)
-    pairs = pairDao.getPairsByExchangeId(btceExchangeId)
-    
-    while True:    
         # get btce pairs and save
         coins = []
         for pairObj in pairs:
@@ -82,57 +82,61 @@ def run_collector(period):
 # Expunge entries older than maxAgeDays    
 def run_cleanup(period, maxAgeHours):
 
-    # get db connection
-    session = getSession() 
-    coinDao = CoinDao(session)
-    
-    exchangeDao = ExchangeDao(session)
-    btceExchangeId = exchangeDao.getExchangeByName('btce').id
-    
-    coinDao.deleteOldValues(btceExchangeId, maxAgeHours)
-    session.commit()
-    
-    session.close()
-    time.sleep(period)
+    while True:
+        # get db connection
+        session = getSession() 
+        coinDao = CoinDao(session)
+        
+        exchangeDao = ExchangeDao(session)
+        btceExchangeId = exchangeDao.getExchangeByName('btce').id
+        
+        coinDao.deleteOldValues(btceExchangeId, maxAgeHours)
+        session.commit()
+        
+        session.close()
+        time.sleep(period)
     
 # Trade them coins
 def run_trader(period, shortperiod, longperiod, shortnumperiods, longnumperiods):
-    session = getSession() 
+    
     trader = Trader()
     prevstate = TradeState.NA
-    exchangeDao = ExchangeDao(session)
-    btceExchangeId = exchangeDao.getExchangeByName('btce').id
     
-    # get available pairs
-    pairDao = PairDao(session)
-    pairs = pairDao.getPairsByExchangeId(btceExchangeId)
+    while True:
+        session = getSession() 
+        exchangeDao = ExchangeDao(session)
+        btceExchangeId = exchangeDao.getExchangeByName('btce').id
         
-    ema = Ema(session)
-    for pairObj in pairs:
-        pair = pairObj.pair
-        #shortema = coinData.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
-        #longema = coinData.getEma(btceExchangeId, pair, longperiod, longnumperiods)
-        shortema = ema.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
-        longema = ema.getEma(btceExchangeId, pair, longperiod, longnumperiods)
-        print "Short ema:"+str(shortema)+". Long ema:"+str(longema)
-        print "Previous state:"+str(prevstate)
-        if shortema < longema:
-            if prevstate == TradeState.LONGBELOW or prevstate == TradeState.LONGEQUAL:
-                print "SELL "+pair+" IF POSSIBLE"
-                trader.sell(btceExchangeId, pair)
+        # get available pairs
+        pairDao = PairDao(session)
+        pairs = pairDao.getPairsByExchangeId(btceExchangeId)
+            
+        ema = Ema(session)
+        for pairObj in pairs:
+            pair = pairObj.pair
+            #shortema = coinData.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
+            #longema = coinData.getEma(btceExchangeId, pair, longperiod, longnumperiods)
+            shortema = ema.getEma(btceExchangeId, pair, shortperiod, shortnumperiods)
+            longema = ema.getEma(btceExchangeId, pair, longperiod, longnumperiods)
+            print "Short ema:"+str(shortema)+". Long ema:"+str(longema)
+            print "Previous state:"+str(prevstate)
+            if shortema < longema:
+                if prevstate == TradeState.LONGBELOW or prevstate == TradeState.LONGEQUAL:
+                    print "SELL "+pair+" IF POSSIBLE"
+                    trader.sell(btceExchangeId, pair)
+                else:
+                    print "HOLD "+pair
+                prevstate = TradeState.LONGABOVE
             else:
-                print "HOLD "+pair
-            prevstate = TradeState.LONGABOVE
-        else:
-            if prevstate == TradeState.LONGABOVE or prevstate == TradeState.LONGEQUAL:
-                print "BUY "+pair+" IF POSSIBLE"
-                trader.buy(btceExchangeId, pair)
-            else:
-                print "HOLD fiat, wait to buy "+pair
-            prevstate = TradeState.LONGBELOW
-    
-    session.close()
-    time.sleep(period)
+                if prevstate == TradeState.LONGABOVE or prevstate == TradeState.LONGEQUAL:
+                    print "BUY "+pair+" IF POSSIBLE"
+                    trader.buy(btceExchangeId, pair)
+                else:
+                    print "HOLD fiat, wait to buy "+pair
+                prevstate = TradeState.LONGBELOW
+        
+        session.close()
+        time.sleep(period)
 
 if __name__ == '__main__': 
     run()

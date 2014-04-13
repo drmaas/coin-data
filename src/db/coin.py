@@ -34,6 +34,19 @@ class Pair(Base):
     def __repr__(self):
         return "<Pair(id='%i', exchangeId='%i', pair='%s')>" % ( self.id, self.exchangeId, self.pair)    
 
+class TradeAction(Base):
+    
+    __tablename__ = 'tradeaction'
+    
+    id = Column(Integer, Sequence('tradeaction_id_seq'), primary_key=True)
+    pairId = Column(Integer)
+    recommendation = Column(String(50))
+    action = Column(String(50))
+    message = Column(String(250))
+    
+    def __repr__(self):
+        return "<TradeAction(id='%i', pairId='%i', recommendation='%s', action='%s', message='%s')>" % ( self.id. self.pairId, self.recommendation, self.action, self.message)
+
 class Coin(Base):
     
     __tablename__ = 'coin'

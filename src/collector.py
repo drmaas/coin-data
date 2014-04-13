@@ -35,6 +35,7 @@ def run():
     # Run once every 5 minutes
     period3 = 300
     t3 = Thread(target=run_trader, args=(period3,1,1,8,24))
+    
     t1.start()
     t2.start()
     t3.start()

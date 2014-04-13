@@ -76,6 +76,7 @@ def run_collector(period):
         session.add_all(coins)
         session.commit()
         
+        session.close()
         time.sleep(period)
     
 # Expunge entries older than maxAgeDays    
@@ -91,6 +92,7 @@ def run_cleanup(period, maxAgeHours):
     coinDao.deleteOldValues(btceExchangeId, maxAgeHours)
     session.commit()
     
+    session.close()
     time.sleep(period)
     
 # Trade them coins
@@ -129,6 +131,7 @@ def run_trader(period, shortperiod, longperiod, shortnumperiods, longnumperiods)
                 print "HOLD fiat, wait to buy "+pair
             prevstate = TradeState.LONGBELOW
     
+    session.close()
     time.sleep(period)
 
 if __name__ == '__main__': 

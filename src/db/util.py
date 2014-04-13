@@ -14,7 +14,7 @@ def connect():
     dburl = os.environ['DATABASE_URL']
     #return create_engine('sqlite:////home/drmaas/projects/python/coin-data/coin.db', echo=True)
     #localtest: postgresql://coin:coin@localhost/coindb
-    return create_engine(dburl, echo=True)     
+    return create_engine(dburl, echo=False)     
 
 def getSession():
     engine = connect()

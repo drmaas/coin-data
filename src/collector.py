@@ -7,7 +7,6 @@ Created on Mar 9, 2014
 from api.btce import Btce
 
 from db.coin import Coin
-from db.coin import Pair
 
 from db.dao import ExchangeDao
 from db.dao import CoinDao
@@ -62,15 +61,13 @@ def run_collector(period):
             pair = pairObj.pair
             pairId = pairObj.id
             ticker = btce.getTicker(pair)
-            coin = Coin(pair=pair,
-                        high=float(ticker['high']),
+            coin = Coin(high=float(ticker['high']),
                         low=float(ticker['low']),
                         average=float(ticker['avg']),
                         bid=float(ticker['buy']),
                         ask=float(ticker['sell']),
                         last=float(ticker['last']),
                         timestamp=int(ticker['updated']),
-                        exchangeId=btceExchangeId,
                         pairId=pairId)
             coins.append(coin)
     

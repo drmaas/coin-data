@@ -20,6 +20,13 @@ class BtceTest(unittest.TestCase):
         result = btce.getTicker('btc_usd')
         print result
         self.assertIsNotNone(result)
+        
+    def testGetInfo(self):
+        btce = Btce()
+        result = btce.getInfo()
+        print result
+        self.assertIsNotNone(result)
+        self.assertEquals(1, result['success'])
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testGetTicker']

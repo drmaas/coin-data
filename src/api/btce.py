@@ -12,13 +12,14 @@ import hashlib
 import hmac
 import time
 import urllib
+import os
 
 class Btce(Base):
 
     def __init__(self):
         super(Btce, self).__init__('https://btc-e.com')
-        self.__key = 'GQRTBGP6-16YAV1WC-8O6OHQW1-DXJ6XF8H-Q5544A7O'
-        self.__secret = 'cce87574971e4f906a578922f18358007c777599d87046ea689bf73c7a1f0a30'
+        self.__key = os.environ['API_KEY']
+        self.__secret = os.environ['API_SECRET']
 
     def __nonce(self):
         return str(time.time()).split('.')[0]

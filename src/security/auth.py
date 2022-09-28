@@ -6,13 +6,13 @@ Created on Mar 31, 2014
 
 from functools import wraps
 from flask import request, Response
-
+import os
 
 def check_auth(username, password):
     """This function is called to check if a username /
     password combination is valid.
     """
-    return username == 'admin' and password == 'Snuggles24'
+    return username == os.environ['USER'] and password == os.environ['PASSWD']
 
 def authenticate():
     """Sends a 401 response that enables basic auth"""
